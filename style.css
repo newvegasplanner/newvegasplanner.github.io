@@ -1,0 +1,182 @@
+[invisible=true] {
+    visibility: hidden !important;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+:root {
+    --primary-color: #38fd3a;
+    --increased-color: #ffae34;
+    --decreased-color: #04a3ff;
+    --secondary-color: #000000;
+    --not-ready-color: #fd383a;
+    --row-1-color: #172517;
+    --row-2-color: #0d140d;
+}
+
+.skill-decreased {
+    color: var(--decreased-color);
+}
+
+.skill-increased {
+    color: var(--increased-color);
+}
+
+html,
+body {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--primary-color);
+    padding: 0;
+    margin: 1%;
+    line-height: 1.5em;
+}
+
+body {
+    background-color: var(--secondary-color);
+}
+
+button {
+    border: none;
+    border-radius: 1px;
+    font-weight: bold;
+    background-color: var(--primary-color);
+    text-align: center;
+}
+
+.add-sub-button {
+    margin: 5px 2.5px;
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.import-export {
+    padding-left: 20px;
+}
+
+.import-export button {
+    margin-right: 20px;
+    padding: 5px 10px;
+}
+
+.skill-checkboxes {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: auto;
+    row-gap: 10px;
+    align-items: center;
+}
+
+.skill-checkbox {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 2em 10em;
+
+}
+
+.show-option-checkbox {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 2em 90%;
+    padding: 5px 10px;
+}
+
+.special-tagged>div {
+    float: left;
+    padding: 20px;
+}
+
+.stat-value {
+    text-align: center;
+    width: 20px;
+}
+
+.tagged-skills>div:first-child {
+    padding-top: 2.5px;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    margin: 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.15em;
+    height: 1.15em;
+    border: 0.15em solid currentColor;
+    display: grid;
+    place-content: center;
+}
+
+input[type="checkbox"]::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em var(--primary-color);
+}
+
+input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+thead {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+tbody>tr>td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.spreadsheet>tbody>tr:nth-child(even) {
+    background: var(--row-1-color);
+}
+
+.spreadsheet>tbody>tr:nth-child(odd) {
+    background: var(--row-2-color);
+}
+
+.not-ready {
+    color: var(--not-ready-color);
+}
+
+.perks-table>thead>th {
+    padding: 5px 10px;
+}
+
+.perks-table>tbody>tr>td {
+    padding: 5px 10px;
+    text-align: left;
+}
+
+.modal-content button {
+    margin: 10px;
+    padding: 5px 10px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--secondary-color);
+    /*background-color: rgb(0,0,0); /* Fallback color */
+    /*background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    width: 90%;
+    margin: 2.5% auto;
+    padding: 20px;
+    border: 1px solid var(--primary-color);
+    overflow: auto;
+}
