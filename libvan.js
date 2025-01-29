@@ -896,7 +896,7 @@ function new_row(body, prev_level_ready, level, build) {
         onclick: () => { ready_for_next_level.val = true; }
     }, "Add Level");
     const remove_level_button = button({
-        invisible: vderive(() => level < 2 || ready_for_next_level),
+        invisible: vderive(() => level < 2 || ready_for_next_level.val),
         onclick: () => {
             build.level_ups.pop();
             row.remove();
