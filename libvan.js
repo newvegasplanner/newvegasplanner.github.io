@@ -353,6 +353,9 @@ class Requirement {
      */
     test_not = level => this.test(level).map_or_else(Result.ok, Result.err);
 
+    /** @returns {Requirement} */
+    clone() { throw new Error("Requirement doesn't define clone") }
+
     /**
      * @param {Array.<string|number>} r
      * @returns {Result<Requirement, String>}
@@ -439,6 +442,8 @@ class NotRequirement extends Requirement {
      * @returns {Result<string, string>}
      */
     test_not = level => this.inner.test(level);
+
+    clone = () => new NotRequirement(this.inner.clone());
 }
 
 class PerkRequirement extends Requirement {
@@ -457,6 +462,8 @@ class PerkRequirement extends Requirement {
     test = level =>
         level.perks_names.has(this.perk) ? Result.ok(`has the perk ${this.perk}`)
             : Result.err(`doesn't have the perk ${this.perk}`);
+
+    clone = () => new PerkRequirement(this.perk);
 }
 
 class TaggedRequirement extends Requirement {
@@ -475,6 +482,8 @@ class TaggedRequirement extends Requirement {
     test = level =>
         level.tagged_skills.has(this.skill) ? Result.ok(`has ${this.skill} tagged`)
             : Result.err(`doesn't have ${this.skill} tagged`);
+
+    clone = () => new TaggedRequirement(skill);
 }
 
 class ComparisonRequirement extends Requirement {
@@ -518,6 +527,8 @@ class ComparisonRequirement extends Requirement {
         if (this.comparator == '<') return level_value < this.value;
         throw new Error('Unknown comparator ' + this.comparator);
     }
+
+    clone = () => new ComparisonRequirement(this.comparator, this.prop, this.value);
 }
 
 class OrRequirement extends Requirement {
@@ -542,6 +553,8 @@ class OrRequirement extends Requirement {
         }
         return Result.err(failures.join(" AND "));
     }
+
+    clone = () => new OrRequirement(this.requirements.map(r => r.clone()));
 }
 
 {
@@ -664,6 +677,7 @@ class Perk {
 
 /** @returns {Object.<string, Perk>} */
 function load_perks() {
+    /** @type {Object.<string, Perk>} */
     const perks = Object.fromEntries(RAW_PERKS.map(p => Perk.parse(p).get_or_throw()).map(p => [p.name, p]));
 
     // Intense training
@@ -694,6 +708,26 @@ function load_perks() {
         }
     }
     // /Intense Training
+
+    // Tags
+    const tag_perk = perks['Tag!'];
+    delete perks['Tag!'];
+    for (const skill of SKILLS) {
+        const name = `Tag!: ${skill}`;
+        const requirements = tag_perk.requirements.map(r => r.clone());
+        requirements.push(new NotRequirement(new TaggedRequirement(skill)));
+        perks[name] = new Perk(
+            name,
+            true,
+            tag_perk.id,
+            tag_perk.edid,
+            requirements,
+            {},
+            {},
+            new Set([skill])
+        );
+    }
+    // /Tags
 
     return perks;
 }
@@ -850,6 +884,8 @@ function new_row(body, prev_level_ready, level, build) {
     /** @param {function(Perk): number} f */
     const perks_changes = f => vderive(() => Array.from(perks.val).reduce((a, p) => a + (f(p) ?? 0), 0));
 
+    const tagged_skills = vderive(() => Array.from(perks.val).reduce((a, p) => a.union(p.new_tagged_skills ?? new Set()), new Set()));
+
     const stat_change = stat => perks_changes(p => p.stats_changes[stat]);
     const stats_changes = stats_map(stat_change);
 
@@ -911,6 +947,7 @@ function new_row(body, prev_level_ready, level, build) {
                 level_up.skills_increases[skill] = skills_change[skill].val;
             }
             level_up.perks = perks.val;
+            level_up.tagged_skills = tagged_skills.val;
             new_row(body, ready_for_next_level, level + 1, build);
         }
     });
