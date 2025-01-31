@@ -59,6 +59,7 @@ const compute_skill_from_stat = (stat) => Math.max(0, stat) * 2;
  */
 const compute_skill_from_stat_and_luck = (stat, luck) => Math.ceil(compute_skill_from_stat(stat) + luck / 2 - 1);
 
+// TODO: remove tagged_skills and use the Tag! perks instead
 class LevelUp {
     /**
      * @param {?Set<String>} tagged_skills
@@ -168,6 +169,9 @@ class Build {
                 }
                 for (const [skill, change] of Object.entries(perk.skills_changes)) {
                     skills[skill] += change;
+                }
+                for (const skill of perk.new_tagged_skills) {
+                    tagged_skills.add(skill);
                 }
                 perks.add(perk);
             }
