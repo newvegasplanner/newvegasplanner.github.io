@@ -596,8 +596,9 @@ class Perk {
      * @param {Object.<string, number>} skills_changes
      * @param {Set<string>} new_tagged_skills
      */
-    constructor(name, is_playable, id, edid, requirements, stats_changes, skills_changes, new_tagged_skills) {
+    constructor(name, description, is_playable, id, edid, requirements, stats_changes, skills_changes, new_tagged_skills) {
         this.name = name
+        this.description = description
         this.is_playable = is_playable
         this.id = id
         this.edid = edid
@@ -612,14 +613,15 @@ class Perk {
      * @returns {Result<Perk, String>}
      */
     static parse(o) {
-        if (!('name' in o)) return Result.err('Perk name is missing')
-        const name = o.name
-        if (!('is_playable' in o)) return Result.err('Perk is_playable is missing')
-        const is_playable = o.is_playable
-        if (!('id' in o)) return Result.err('Perk id is missing')
-        const id = o.id
-        if (!('edid' in o)) return Result.err('Perk edid is missing')
-        const edid = o.edid
+        if (!('name' in o)) return Result.err('Perk name is missing');
+        const name = o.name;
+        const description = o.description ?? "";
+        if (!('is_playable' in o)) return Result.err('Perk is_playable is missing');
+        const is_playable = o.is_playable;
+        if (!('id' in o)) return Result.err('Perk id is missing');
+        const id = o.id;
+        if (!('edid' in o)) return Result.err('Perk edid is missing');
+        const edid = o.edid;
 
         var requirements = []
         for (const raw of o.requirements ?? []) {
@@ -653,7 +655,7 @@ class Perk {
                 new_tagged_skills.push(raw[1])
             } else return Result.err(`Unknown effect ${raw[0]}`)
         }
-        return Result.ok(new Perk(name, is_playable, id, edid, requirements, stats_changes, skills_changes, new_tagged_skills))
+        return Result.ok(new Perk(name, description, is_playable, id, edid, requirements, stats_changes, skills_changes, new_tagged_skills))
     }
 
     /**
@@ -681,6 +683,7 @@ function load_perks() {
     const perks = Object.fromEntries(RAW_PERKS.map(p => Perk.parse(p).get_or_throw()).map(p => [p.name, p]));
 
     // Intense training
+    const intense_training = perks["Intense Training 1"];
     for (let i = 1; i <= 10; i++) {
         delete perks[`Intense Training ${i}`];
     }
@@ -697,9 +700,10 @@ function load_perks() {
             const name = `Intense Training ${i}: ${stat}`;
             perks[name] = new Perk(
                 name,
+                intense_training.description,
                 true,
-                "281777", // id
-                "IntenseTraining", // edid
+                intense_training.id,
+                intense_training.edid,
                 requirements,
                 stats_changes,
                 {},
@@ -718,6 +722,7 @@ function load_perks() {
         requirements.push(new NotRequirement(new TaggedRequirement(skill)));
         perks[name] = new Perk(
             name,
+            tag_perk.description,
             true,
             tag_perk.id,
             tag_perk.edid,
@@ -728,6 +733,14 @@ function load_perks() {
         );
     }
     // /Tags
+
+    // Talented
+    // no idea why but I can't extract the effects of the perk so I'm adding them here manually
+    const talented = perks['Talented'];
+    for (const skill of SKILLS) {
+        talented.skills_changes[skill] = 5;
+    }
+    // /Talented
 
     return perks;
 }
@@ -990,9 +1003,9 @@ const PerksSelectionButton = (level, selected_perks, lock_button) => {
                     : selected_perks.val.union(new Set([perk]));
             };
             const checkbox = input({ type: "checkbox", checked: checked, onclick: onclick });
-            return tr({ hidden: hidden }, td(checkbox), td(perk.name), vderive(() => td(test_res.get_err_or(""))));
+            return tr({ hidden: hidden }, td(checkbox), td(perk.name), vderive(() => td(test_res.get_err_or(""))), td(perk.description));
         }));
-        const perks_table = table({ class: "perks-table" }, thead(th(), th("Perk/Trait"), th(vderive(() => show_req_not_met.val ? "Missing Requirements" : ""))), body);
+        const perks_table = table({ class: "perks-table" }, thead(th(), th("Perk/Trait"), th(vderive(() => show_req_not_met.val ? "Missing Requirements" : "")), th("Description")), body);
         const perk_div = div({ class: "modal-content" }, perks_table);
         const modal_div = div({ class: "modal", style: "display:block;" }, perk_div);
 
