@@ -836,7 +836,6 @@ const ImportExportBuild = (stats_points, tagged_skills, level_ups, build) => {
             reader.onload = () => {
                 const parsed = JSON.parse(reader.result);
                 const loaded_build = Build.fromJSON(parsed);
-                console.log(loaded_build);
                 level_ups.val = loaded_build.level_ups;
                 if (loaded_build.level_ups.length > 0) {
                     tagged_skills.val = loaded_build.level_ups[0].tagged_skills;
@@ -947,7 +946,9 @@ function new_row(body, prev_level_ready, level, build) {
                 level_up.skills_increases[skill] = skills_change[skill].val;
             }
             level_up.perks = perks.val;
-            level_up.tagged_skills = tagged_skills.val;
+            if (level == 1) {
+                level_up.tagged_skills = (level == 1) ? prev_level.tagged_skills.union(tagged_skills.val) : tagged_skills.val;
+            }
             new_row(body, ready_for_next_level, level + 1, build);
         }
     });
