@@ -356,6 +356,8 @@ class Requirement {
     /** @returns {Requirement} */
     clone() { throw new Error("Requirement doesn't define clone") }
 
+    toString() { throw new Error("Requirement doesn't define toString") }
+
     /**
      * @param {Array.<string|number>} r
      * @returns {Result<Requirement, String>}
@@ -443,6 +445,8 @@ class NotRequirement extends Requirement {
      */
     test_not = level => this.inner.test(level);
 
+    toString = () => `not(${this.inner.toString()})`;
+
     clone = () => new NotRequirement(this.inner.clone());
 }
 
@@ -463,6 +467,8 @@ class PerkRequirement extends Requirement {
         level.perks_names.has(this.perk) ? Result.ok(`has the perk ${this.perk}`)
             : Result.err(`doesn't have the perk ${this.perk}`);
 
+    toString = () => `has ${this.perk.name}`;
+
     clone = () => new PerkRequirement(this.perk);
 }
 
@@ -482,6 +488,8 @@ class TaggedRequirement extends Requirement {
     test = level =>
         level.tagged_skills.has(this.skill) ? Result.ok(`has ${this.skill} tagged`)
             : Result.err(`doesn't have ${this.skill} tagged`);
+
+    toString = () => `has ${this.skill} tagged`;
 
     clone = () => new TaggedRequirement(skill);
 }
@@ -528,6 +536,8 @@ class ComparisonRequirement extends Requirement {
         throw new Error('Unknown comparator ' + this.comparator);
     }
 
+    toString = () => `${this.prop} ${this.comparator} ${this.value}`;
+
     clone = () => new ComparisonRequirement(this.comparator, this.prop, this.value);
 }
 
@@ -553,6 +563,8 @@ class OrRequirement extends Requirement {
         }
         return Result.err(failures.join(" AND "));
     }
+
+    toString = () => this.requirements.reduce((a, r) => a + " OR " + r.toString(), "");
 
     clone = () => new OrRequirement(this.requirements.map(r => r.clone()));
 }
@@ -825,7 +837,7 @@ const App = () => {
         TaggedSkillsSelection(tagged_skills)
     );
     return div({ class: "main" },
-        ImportExportBuild(stats_points, tagged_skills, level_ups, build),
+        TopButtons(stats_points, tagged_skills, level_ups, build),
         special_and_tagged,
         vderive(() => build.val === null ? div() : div(Spreadsheet(build.val)))
     );
@@ -837,7 +849,7 @@ const App = () => {
  * @param {Van<Array<LevelUp>>} level_ups
  * @param {Van<Build>} build
  */
-const ImportExportBuild = (stats_points, tagged_skills, level_ups, build) => {
+const TopButtons = (stats_points, tagged_skills, level_ups, build) => {
     const import_input = input({
         type: "file", style: "display: none;", onchange: e => {
             const reader = new FileReader();
@@ -873,7 +885,7 @@ const ImportExportBuild = (stats_points, tagged_skills, level_ups, build) => {
         })
     };
     const export_button = vderive(() => button({ disabled: build.val == null, onclick: export_build }, "Export Build"));
-    return div({ class: "import-export" }, export_button, import_input, import_build);
+    return div({ class: "import-export" }, export_button, import_input, import_build, PerksListButton());
 }
 
 /**
@@ -979,6 +991,36 @@ const Spreadsheet = (build) => {
     return table({ class: "spreadsheet" }, thead(th("Level"), th("Skill Points"), SKILLS.map(s => th(s)),
         th('S'), th('P'), th('E'), th('C'), th('I'), th('A'), th('L'),
         th('Perks/Traits'), th('Add Level'), th('Remove Level')), body);
+}
+
+const PerksListButton = () => {
+    const PerkList = () => {
+        const perks = Object.values(PERKS);
+        perks.sort((p1, p2) => p1.name.localeCompare(p2.name));
+        const body = tbody(perks.map(perk => {
+            var effects = [];
+            for (const [stat, change] of Object.entries(perk.stats_changes)) {
+                effects.push(`${stat} ${change}`);
+            }
+            for (const [skill, change] of Object.entries(perk.skills_changes)) {
+                effects.push(`${skill} ${change}`);
+            }
+            for (const skill of perk.new_tagged_skills) {
+                effects.push(`tag ${skill}`);
+            }
+
+            return tr(td(perk.name),
+                td(perk.requirements.map(r => r.toString()).join(", ")),
+                td(effects.join(", ")),
+                td(perk.description))
+        }));
+        const perks_table = table({ class: "perks-table" }, thead(th("Perk/Trait"), th("Requirements"), th("Effects"), th("Description")), body);
+        const perk_div = div({ class: "modal-content" }, perks_table);
+        const modal_div = div({ class: "modal", style: "display:block;" }, perk_div);
+        van.add(perk_div, button({ onclick: () => { modal_div.remove(); } }, "Close"));
+        van.add(document.body, modal_div);
+    }
+    return button({ onclick: () => { PerkList() } }, "List Perks/Traits");
 }
 
 /**
